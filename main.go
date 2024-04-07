@@ -19,6 +19,7 @@ func main() {
 	mux.HandleFunc("GET "+apiPathRoot+"/healthz", healthz)
 	mux.HandleFunc("GET "+adminPathRoot+"/metrics", cfg.showMetrics)
 	mux.HandleFunc(""+apiPathRoot+"/reset", cfg.resetHits)
+	mux.HandleFunc("POST "+apiPathRoot+"/validate_message", messageValidator)
 	mux.Handle(""+appPathRoot+"/*", cfg.middlewareMetricsInc(http.StripPrefix(appPathRoot, http.FileServer(http.Dir(filepathRoot)))))
 
 	corsMux := middlewareCors(mux)
