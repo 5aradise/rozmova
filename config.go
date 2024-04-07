@@ -31,9 +31,18 @@ func (cfg *apiConfig) resetHits(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) showMetrics(w http.ResponseWriter, r *http.Request) {
-	metrics := fmt.Sprintf("Hits: %d", cfg.fileserverHits)
+	htmlMetrics := fmt.Sprintf(`
+	<html>
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	<body>
+			<h1>Welcome, Rozmova Admin</h1>
+			<p>Chirpy has been visited %d times!</p>
+	</body>
+	
+	</html>
+	`, cfg.fileserverHits)
+
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(metrics))
+	w.Write([]byte(htmlMetrics))
 }
