@@ -11,7 +11,7 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := respMessage{}
-	err := getResp(r, &msg)
+	err := decodeResp(r, &msg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -28,7 +28,7 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cfg.db.AddMsg(cleanMsg)
+	_, err = cfg.db.AddMsg(cleanMsg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -51,7 +51,7 @@ func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) getMessageById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("messageId")
-	msg, err := cfg.db.ReadMsg(id)
+	msg, err := cfg.db.ReadMsgById(id)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

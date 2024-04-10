@@ -21,7 +21,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) error {
 	return respondWithJSON(w, code, map[string]string{"error": msg})
 }
 
-func getResp[T any](r *http.Request, dst *T) error {
+func decodeResp[T any](r *http.Request, dst *T) error {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(dst)
 	return err

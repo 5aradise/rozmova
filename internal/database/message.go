@@ -10,13 +10,13 @@ type Message struct {
 	Body string `json:"body"`
 }
 
-func (db *DB) AddMsg(body string) error {
+func (db *DB) AddMsg(body string) (int, error) {
 	db.mux.Lock()
 	defer db.mux.Unlock()
 
 	dbStruct, err := db.readDB()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	id := len(dbStruct.Messages) + 1
@@ -25,10 +25,14 @@ func (db *DB) AddMsg(body string) error {
 		Body: body,
 	}
 	err = db.writeDB(dbStruct)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
-func (db *DB) ReadMsg(id string) (Message, error) {
+func (db *DB) ReadMsgById(id string) (Message, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 

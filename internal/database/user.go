@@ -6,29 +6,35 @@ import (
 )
 
 type User struct {
-	Id    int    `json:"id"`
-	Email string `json:"email"`
+	Id             int    `json:"id"`
+	Email          string `json:"email"`
+	HashedPassword []byte `json:"hashedPassword"`
 }
 
-func (db *DB) AddUser(email string) error {
+func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	db.mux.Lock()
 	defer db.mux.Unlock()
 
 	dbStruct, err := db.readDB()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	id := len(dbStruct.Users) + 1
 	dbStruct.Users[strconv.Itoa(id)] = User{
-		Id:    id,
-		Email: email,
+		Id:             id,
+		Email:          email,
+		HashedPassword: hashedPassword,
 	}
 	err = db.writeDB(dbStruct)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
-func (db *DB) ReadUser(id string) (User, error) {
+func (db *DB) ReadUserById(id string) (User, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 
@@ -43,6 +49,24 @@ func (db *DB) ReadUser(id string) (User, error) {
 	}
 
 	return user, nil
+}
+
+func (db *DB) ReadUserByEmail(email string) (User, error) {
+	db.mux.RLock()
+	defer db.mux.RUnlock()
+
+	dbStruct, err := db.readDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	for _, user := range dbStruct.Users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return User{}, errors.New("user with this email doesnt exist")
 }
 
 func (db *DB) ReadUsers() ([]User, error) {
