@@ -3,28 +3,28 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/5aradise/rozmova/internal/database"
 )
 
 func main() {
-	const filepathRoot = "."
-	const appPathRoot = "/app"
-	const apiPathRoot = "/api"
-	const adminPathRoot = "/admin"
 	const port = "8080"
+	const databasePath = "database.json"
 
 	mux := http.NewServeMux()
 
-	cfg := NewApiConfig()
+	db, err := database.NewDB(databasePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	mux.HandleFunc("GET "+apiPathRoot+"/healthz", healthz)
-	mux.HandleFunc("GET "+adminPathRoot+"/metrics", cfg.showMetrics)
-	mux.HandleFunc(""+apiPathRoot+"/reset", cfg.resetHits)
-	mux.HandleFunc("POST "+apiPathRoot+"/validate_message", messageValidator)
-	mux.Handle(""+appPathRoot+"/*", cfg.middlewareMetricsInc(http.StripPrefix(appPathRoot, http.FileServer(http.Dir(filepathRoot)))))
+	cfg := NewApiConfig(db)
+
+	createHandles(mux, cfg)
 
 	corsMux := middlewareCors(mux)
 
-	err := http.ListenAndServe(":"+port, corsMux)
+	err = http.ListenAndServe(":"+port, corsMux)
 
 	if err != nil {
 		log.Fatal(err)

@@ -3,15 +3,19 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/5aradise/rozmova/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	db             *database.DB
 }
 
-func NewApiConfig() *apiConfig {
+func NewApiConfig(db *database.DB) *apiConfig {
 	return &apiConfig{
 		fileserverHits: 0,
+		db:             db,
 	}
 }
 

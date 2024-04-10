@@ -1,1 +1,3 @@
-rozmova.exe
+*.exe
+
+database.json

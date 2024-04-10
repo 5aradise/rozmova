@@ -1,32 +1,21 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 	"regexp"
 )
 
-func messageValidator(w http.ResponseWriter, r *http.Request) {
+func validateMessage(msg string) (string, error) {
 	const validLen = 140
-	type message struct {
-		Body string `json:"body"`
+	if len(msg) > validLen {
+		return "", errors.New("message is too long")
 	}
-	decoder := json.NewDecoder(r.Body)
-	msg := message{}
-	err := decoder.Decode(&msg)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Something went wrong")
-		return
-	}
-	if len(msg.Body) > validLen {
-		respondWithError(w, http.StatusBadRequest, "Message is too long")
-		return
-	}
-	respondWithJSON(w, http.StatusOK, map[string]string{"cleaned_body": cleanMessage(msg.Body)})
+	return cleanMessage(msg), nil
 }
 
 func cleanMessage(msg string) string {
-	return replaceBadWords(msg, "ІДІ НАХУЙ")
+	const replaceStr = "ІДІ НАХУЙ"
+	return replaceBadWords(msg, replaceStr)
 }
 
 func replaceBadWords(msg, replace string) string {
