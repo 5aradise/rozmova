@@ -9,7 +9,7 @@ import (
 
 func main() {
 	const port = "8080"
-	const databasePath = "database.json"
+	const databasePath = "db"
 
 	mux := http.NewServeMux()
 

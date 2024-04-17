@@ -3,6 +3,8 @@ package database
 import (
 	"errors"
 	"strconv"
+
+	"github.com/5aradise/jsondb"
 )
 
 type User struct {
@@ -11,22 +13,20 @@ type User struct {
 	HashedPassword []byte `json:"hashedPassword"`
 }
 
-func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
+var userPath = "users"
 
-	dbStruct, err := db.readDB()
+func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
+	id, err := db.GetLen(userPath)
 	if err != nil {
 		return 0, err
 	}
 
-	id := len(dbStruct.Users) + 1
-	dbStruct.Users[strconv.Itoa(id)] = User{
+	user := User{
 		Id:             id,
 		Email:          email,
 		HashedPassword: hashedPassword,
 	}
-	err = db.writeDB(dbStruct)
+	err = db.Insert(userPath+db.Divider()+strconv.Itoa(id), user)
 	if err != nil {
 		return 0, err
 	}
@@ -35,51 +35,45 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 }
 
 func (db *DB) ReadUserById(id string) (User, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
-
-	dbStruct, err := db.readDB()
+	user := User{}
+	err := db.GetStruct(userPath+db.Divider()+id, &user)
 	if err != nil {
 		return User{}, err
 	}
-
-	user, ok := dbStruct.Users[id]
-	if !ok {
-		return User{}, errors.New("user with this id doesnt exist")
-	}
-
 	return user, nil
 }
 
 func (db *DB) ReadUserByEmail(email string) (User, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
+	for i := 0; ; i++ {
+		mappedUser, err := db.GetMap(userPath + db.Divider() + strconv.Itoa(i))
+		if err != nil {
+			return User{}, errors.New("user with this email doesnt exist")
+		}
 
-	dbStruct, err := db.readDB()
-	if err != nil {
-		return User{}, err
-	}
-
-	for _, user := range dbStruct.Users {
-		if user.Email == email {
+		if mappedUser["email"] == email {
+			user := User{}
+			err = jsondb.MapToStruct(&user, mappedUser)
+			if err != nil {
+				return User{}, err
+			}
 			return user, nil
 		}
 	}
-
-	return User{}, errors.New("user with this email doesnt exist")
 }
 
 func (db *DB) ReadUsers() ([]User, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
-
-	dbStruct, err := db.readDB()
+	maps, err := db.GetAllMaps(userPath)
 	if err != nil {
 		return nil, err
 	}
 
-	users := make([]User, 0, len(dbStruct.Users))
-	for _, user := range dbStruct.Users {
+	users := make([]User, 0, len(maps))
+	for _, mapInst := range maps {
+		user := User{}
+		err = jsondb.MapToStruct(&user, mapInst)
+		if err != nil {
+			return nil, err
+		}
 		users = append(users, user)
 	}
 	return users, nil
