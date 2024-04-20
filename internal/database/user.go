@@ -34,6 +34,37 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	return id, nil
 }
 
+func (db *DB) UpdateUser(id string, email string, hashedPassword []byte) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	dbStruct, err := db.readDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	updatedUser, ok := dbStruct.Users[id]
+	if !ok {
+		return User{}, errors.New("user with this id doesnt exist")
+	}
+
+	if email != "" {
+		updatedUser.Email = email
+	}
+	if len(hashedPassword) != 0 {
+		updatedUser.HashedPassword = hashedPassword
+	}
+
+	dbStruct.Users[id] = updatedUser
+
+	err = db.writeDB(dbStruct)
+	if err != nil {
+		return User{}, err
+	}
+
+	return updatedUser, nil
+}
+
 func (db *DB) ReadUserById(id string) (User, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()

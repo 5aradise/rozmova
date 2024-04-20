@@ -4,7 +4,7 @@ import "net/http"
 
 func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	const filepathRoot = "."
-	
+
 	const appPathRoot = "/app"
 	const apiPathRoot = "/api"
 	const adminPathRoot = "/admin"
@@ -24,6 +24,7 @@ func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	mux.HandleFunc("GET "+apiPathRoot+usersPath, cfg.getUsers)
 	mux.HandleFunc("GET "+apiPathRoot+usersPath+"/{userId}", cfg.getUserById)
 	mux.HandleFunc("POST "+apiPathRoot+usersPath, cfg.registerUser)
+	mux.HandleFunc("PUT "+apiPathRoot+usersPath, cfg.changeUser)
 
 	mux.HandleFunc("POST "+apiPathRoot+loginPath, cfg.loginUser)
 

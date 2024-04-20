@@ -10,6 +10,7 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 	type respUser struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Expires  int    `json:"expires_in_seconds"`
 	}
 
 	resp := respUser{}
@@ -31,8 +32,13 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jwtToken, err := cfg.createJWTtoken(requiredUser.Id, int64(resp.Expires))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, map[string]any{
-		"id":    requiredUser.Id,
-		"email": requiredUser.Email,
+		"token": jwtToken,
 	})
 }

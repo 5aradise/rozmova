@@ -10,12 +10,14 @@ import (
 type apiConfig struct {
 	fileserverHits int
 	db             *database.DB
+	jwtKey         []byte
 }
 
-func NewApiConfig(db *database.DB) *apiConfig {
+func NewApiConfig(db *database.DB, jwtKey string) *apiConfig {
 	return &apiConfig{
 		fileserverHits: 0,
 		db:             db,
+		jwtKey:         []byte(jwtKey),
 	}
 }
 

@@ -50,6 +50,47 @@ func (cfg *apiConfig) registerUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, map[string]any{"email": resp.Email, "id": id})
 }
 
+func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
+	token, err := cfg.getJWTtoken(r)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userId, err := token.Claims.GetSubject()
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	type respUser struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	resp := respUser{}
+	err = decodeResp(r, &resp)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	hashedPassword := []byte("")
+	if resp.Password != "" {
+		hashedPassword, err = bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	user, err := cfg.db.UpdateUser(userId, resp.Email, hashedPassword)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]any{"email": user.Email, "id": user.Id})
+}
+
 func (cfg *apiConfig) getUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.db.ReadUsers()
 	if err != nil {
