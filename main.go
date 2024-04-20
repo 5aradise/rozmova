@@ -20,7 +20,7 @@ func main() {
 		port = "8080"
 	}
 	if databasePath == "" {
-		databasePath = "db.json"
+		databasePath = "db"
 	}
 	if jwtSecret == "" {
 		jwtSecret = "Glory to Ukraine!"

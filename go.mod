@@ -7,3 +7,5 @@ require golang.org/x/crypto v0.22.0 // direct
 require github.com/joho/godotenv v1.5.1 // direct
 
 require github.com/golang-jwt/jwt/v5 v5.2.1 // direct
+
+require github.com/5aradise/jsondb v1.5.0 // direct

@@ -1,30 +1,29 @@
 package database
 
 import (
-	"errors"
 	"strconv"
+
+	"github.com/5aradise/jsondb"
 )
 
 type Message struct {
 	Id   int    `json:"id"`
-	Body string `json:"body"`
+	Data string `json:"data"`
 }
 
-func (db *DB) AddMsg(body string) (int, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
+var msgPath = "messages"
 
-	dbStruct, err := db.readDB()
+func (db *DB) AddMsg(data string) (int, error) {
+	id, err := db.GetLen(msgPath)
 	if err != nil {
 		return 0, err
 	}
 
-	id := len(dbStruct.Messages) + 1
-	dbStruct.Messages[strconv.Itoa(id)] = Message{
+	msg := Message{
 		Id:   id,
-		Body: body,
+		Data: data,
 	}
-	err = db.writeDB(dbStruct)
+	err = db.Insert(msgPath+db.Divider()+strconv.Itoa(id), msg)
 	if err != nil {
 		return 0, err
 	}
@@ -33,34 +32,29 @@ func (db *DB) AddMsg(body string) (int, error) {
 }
 
 func (db *DB) ReadMsgById(id string) (Message, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
-
-	dbStruct, err := db.readDB()
+	msg := Message{}
+	err := db.GetStruct(msgPath+db.Divider()+id, &msg)
 	if err != nil {
 		return Message{}, err
 	}
-
-	message, ok := dbStruct.Messages[id]
-	if !ok {
-		return Message{}, errors.New("message with this id doesnt exist")
-	}
-
-	return message, nil
+	return msg, nil
 }
 
 func (db *DB) ReadMsgs() ([]Message, error) {
-	db.mux.RLock()
-	defer db.mux.RUnlock()
-
-	dbStruct, err := db.readDB()
+	maps, err := db.GetAllMaps(msgPath)
 	if err != nil {
 		return nil, err
 	}
 
-	messages := make([]Message, 0, len(dbStruct.Messages))
-	for _, msg := range dbStruct.Messages {
-		messages = append(messages, msg)
+	msgs := make([]Message, 0, len(maps))
+	for _, mapInst := range maps {
+		msg := Message{}
+		err = jsondb.MapToStruct(&msg, mapInst)
+		if err != nil {
+			return nil, err
+		}
+		msgs = append(msgs, msg)
 	}
-	return messages, nil
+
+	return msgs, nil
 }
