@@ -42,7 +42,7 @@ func (cfg *apiConfig) showMetrics(w http.ResponseWriter, r *http.Request) {
 
 	<body>
 			<h1>Welcome, Rozmova Admin</h1>
-			<p>Chirpy has been visited %d times!</p>
+			<p>Rozmova has been visited %d times!</p>
 	</body>
 	
 	</html>

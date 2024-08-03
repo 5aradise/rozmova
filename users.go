@@ -73,13 +73,15 @@ func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword := []byte("")
-	if resp.Password != "" {
-		hashedPassword, err = bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
+	if resp.Password == "" {
+		respondWithError(w, http.StatusBadRequest, "empty password")
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	user, err := cfg.db.UpdateUser(userId, resp.Email, hashedPassword)

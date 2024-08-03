@@ -28,13 +28,13 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.AddMsg(cleanMsg)
+	id, err := cfg.db.AddMsg(cleanMsg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]string{"cleaned_body": cleanMsg})
+	respondWithJSON(w, http.StatusCreated, map[string]any{"id": id, "body": cleanMsg})
 }
 
 func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,7 @@ func (cfg *apiConfig) getMessageById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("messageId")
 	msg, err := cfg.db.ReadMsgById(id)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, http.StatusNotFound , err.Error())
 		return
 	}
 

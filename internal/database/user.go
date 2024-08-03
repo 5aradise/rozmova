@@ -20,6 +20,7 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	id++
 
 	user := User{
 		Id:             id,
@@ -71,7 +72,7 @@ func (db *DB) ReadUserById(id string) (User, error) {
 }
 
 func (db *DB) ReadUserByEmail(email string) (User, error) {
-	for i := 0; ; i++ {
+	for i := 1; ; i++ {
 		mappedUser, err := db.GetMap(userPath + db.Divider() + strconv.Itoa(i))
 		if err != nil {
 			return User{}, errors.New("user with this email doesnt exist")

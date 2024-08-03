@@ -39,9 +39,10 @@ func main() {
 
 	corsMux := middlewareCors(mux)
 
-	err = http.ListenAndServe(":"+port, corsMux)
-
-	if err != nil {
-		log.Fatal(err)
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: corsMux,
 	}
+
+	log.Fatal(srv.ListenAndServe())
 }

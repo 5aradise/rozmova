@@ -8,7 +8,7 @@ import (
 
 type Message struct {
 	Id   int    `json:"id"`
-	Data string `json:"data"`
+	Body string `json:"body"`
 }
 
 var msgPath = "messages"
@@ -18,10 +18,11 @@ func (db *DB) AddMsg(data string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	id++
 
 	msg := Message{
 		Id:   id,
-		Data: data,
+		Body: data,
 	}
 	err = db.Insert(msgPath+db.Divider()+strconv.Itoa(id), msg)
 	if err != nil {

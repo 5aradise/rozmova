@@ -11,7 +11,6 @@ func respondWithJSON(w http.ResponseWriter, code int, payload any) error {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(code)
 	w.Write(response)
 	return nil
