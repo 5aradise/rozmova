@@ -53,7 +53,7 @@ func (cfg *apiConfig) getMessageById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("messageId")
 	msg, err := cfg.db.ReadMsgById(id)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound , err.Error())
+		respondWithError(w, http.StatusNotFound, err.Error())
 		return
 	}
 

@@ -25,16 +25,6 @@ func (cfg *apiConfig) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.ReadUserByEmail(resp.Email)
-	if err == nil {
-		respondWithError(w, http.StatusUnauthorized, "user with this email already registered")
-		return
-	}
-	if err.Error() != "user with this email doesnt exist" {
-		respondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
@@ -84,7 +74,7 @@ func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.db.UpdateUser(userId, resp.Email, hashedPassword)
+	user, err := cfg.db.UpdateUser(userId, resp.Email, hashedPassword, "")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/5aradise/jsondb"
 )
@@ -11,11 +12,20 @@ type User struct {
 	Id             int    `json:"id"`
 	Email          string `json:"email"`
 	HashedPassword []byte `json:"hashedPassword"`
+	RefreshToken   struct {
+		Token     string    `json:"token"`
+		ExpiresAt time.Time `json:"expAt"`
+	} `json:"refreshToken"`
 }
 
 var userPath = "users"
 
 func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
+	_, err := db.ReadUserByEmail(email)
+	if err == nil {
+		return 0, errors.New("user with this email already registered")
+	}
+
 	id, err := db.GetLen(userPath)
 	if err != nil {
 		return 0, err
@@ -35,11 +45,10 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	return id, nil
 }
 
-func (db *DB) UpdateUser(id string, email string, hashedPassword []byte) (User, error) {
+func (db *DB) UpdateUser(id string, email string, hashedPassword []byte, token string) (User, error) {
 	currUserPath := userPath + db.Divider() + id
-	updatedUser := User{}
 
-	err := db.GetStruct(currUserPath, &updatedUser)
+	updatedUser, err := db.ReadUserById(id)
 	if err != nil {
 		return User{}, errors.New("user with this id doesnt exist")
 	}
@@ -58,6 +67,16 @@ func (db *DB) UpdateUser(id string, email string, hashedPassword []byte) (User, 
 		}
 		updatedUser.HashedPassword = hashedPassword
 	}
+	if token != "" {
+		const expTime = time.Hour * 24 * 60
+		err = db.Insert(currUserPath+db.Divider()+"refreshToken", map[string]any{
+			"token": token,
+			"expAt": time.Now().Add(expTime),
+		})
+		if err != nil {
+			return User{}, err
+		}
+	}
 
 	return updatedUser, nil
 }
@@ -66,7 +85,7 @@ func (db *DB) ReadUserById(id string) (User, error) {
 	user := User{}
 	err := db.GetStruct(userPath+db.Divider()+id, &user)
 	if err != nil {
-		return User{}, err
+		return User{}, errors.New("user with this id doesnt exist")
 	}
 	return user, nil
 }
@@ -84,6 +103,20 @@ func (db *DB) ReadUserByEmail(email string) (User, error) {
 			if err != nil {
 				return User{}, err
 			}
+			return user, nil
+		}
+	}
+}
+
+func (db *DB) ReadUserByToken(token string) (User, error) {
+	user := User{}
+	for i := 1; ; i++ {
+		err := db.GetStruct(userPath+db.Divider()+strconv.Itoa(i), &user)
+		if err != nil {
+			return User{}, errors.New("user with this token doesnt exist")
+		}
+
+		if user.RefreshToken.Token == token {
 			return user, nil
 		}
 	}

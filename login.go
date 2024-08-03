@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -10,7 +11,6 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 	type respUser struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-		Expires  int    `json:"expires_in_seconds"`
 	}
 
 	resp := respUser{}
@@ -32,13 +32,28 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := cfg.createJWTtoken(requiredUser.Id, int64(resp.Expires))
+	accessToken, err := cfg.createJWTtoken(requiredUser.Id)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	refreshToken, err := createRefreshToken()
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, err = cfg.db.UpdateUser(strconv.Itoa(requiredUser.Id), "", nil, refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]any{
-		"token": jwtToken,
+		"id":            requiredUser.Id,
+		"email":         requiredUser.Email,
+		"token":         accessToken,
+		"refresh_token": refreshToken,
 	})
 }

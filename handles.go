@@ -3,18 +3,18 @@ package main
 import "net/http"
 
 func createHandles(mux *http.ServeMux, cfg *apiConfig) {
-	const filepathRoot = "."
-
-	const appPathRoot = "/app"
-	const apiPathRoot = "/api"
 	const adminPathRoot = "/admin"
+	const apiPathRoot = "/api"
+	const appPathRoot = "/app"
 
 	const messagesPath = "/messages"
 	const usersPath = "/users"
-	const loginPath = "/login"
+
+	const filepathRoot = "./public"
+
+	mux.HandleFunc("GET "+adminPathRoot+"/metrics", cfg.showMetrics)
 
 	mux.HandleFunc("GET "+apiPathRoot+"/healthz", healthz)
-	mux.HandleFunc("GET "+adminPathRoot+"/metrics", cfg.showMetrics)
 	mux.HandleFunc(""+apiPathRoot+"/reset", cfg.resetHits)
 
 	mux.HandleFunc("GET "+apiPathRoot+messagesPath, cfg.getMessages)
@@ -26,7 +26,9 @@ func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	mux.HandleFunc("POST "+apiPathRoot+usersPath, cfg.registerUser)
 	mux.HandleFunc("PUT "+apiPathRoot+usersPath, cfg.changeUser)
 
-	mux.HandleFunc("POST "+apiPathRoot+loginPath, cfg.loginUser)
+	mux.HandleFunc("POST "+apiPathRoot+"/login", cfg.loginUser)
+	mux.HandleFunc("POST "+apiPathRoot+"/refresh", cfg.refreshToken)
+	mux.HandleFunc("POST "+apiPathRoot+"/revoke", cfg.revokeToken)
 
 	mux.Handle(""+appPathRoot+"/*", cfg.middlewareMetricsInc(http.StripPrefix(appPathRoot, http.FileServer(http.Dir(filepathRoot)))))
 }

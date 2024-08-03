@@ -10,18 +10,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func (cfg *apiConfig) createJWTtoken(id int, expInSec int64) (string, error) {
-	var dayInSec int64 = 24 * 60 * 60
-	if expInSec <= 0 || expInSec > dayInSec {
-		expInSec = dayInSec
-	}
+func (cfg *apiConfig) createJWTtoken(userId int) (string, error) {
+	const expTime = time.Hour
 	now := time.Now().UTC()
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.RegisteredClaims{
 			Issuer:    "rozmova",
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expInSec * 1000000000))),
-			Subject:   strconv.Itoa(id),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expTime)),
+			Subject:   strconv.Itoa(userId),
 		})
 	return t.SignedString(cfg.jwtKey)
 }
