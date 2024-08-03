@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"sort"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,14 +42,9 @@ func (cfg *apiConfig) registerUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
-	token, err := cfg.getJWTtoken(r)
+	userId, err := cfg.getIdFromJWT(r)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-	userId, err := token.Claims.GetSubject()
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -96,7 +92,12 @@ func (cfg *apiConfig) getUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) getUserById(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("userId")
+	id, err := strconv.Atoi(r.PathValue("userId"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	user, err := cfg.db.ReadUserById(id)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())

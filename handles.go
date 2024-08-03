@@ -20,6 +20,7 @@ func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	mux.HandleFunc("GET "+apiPathRoot+messagesPath, cfg.getMessages)
 	mux.HandleFunc("GET "+apiPathRoot+messagesPath+"/{messageId}", cfg.getMessageById)
 	mux.HandleFunc("POST "+apiPathRoot+messagesPath, cfg.postMessage)
+	mux.HandleFunc("DELETE "+apiPathRoot+messagesPath+"/{messageId}", cfg.deleteMessage)
 
 	mux.HandleFunc("GET "+apiPathRoot+usersPath, cfg.getUsers)
 	mux.HandleFunc("GET "+apiPathRoot+usersPath+"/{userId}", cfg.getUserById)

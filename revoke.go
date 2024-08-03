@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -26,7 +25,7 @@ func (cfg *apiConfig) revokeToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.UpdateUser(strconv.Itoa(user.Id), "", nil, randToken)
+	_, err = cfg.db.UpdateUser(user.Id, "", nil, randToken)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

@@ -45,8 +45,8 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	return id, nil
 }
 
-func (db *DB) UpdateUser(id string, email string, hashedPassword []byte, token string) (User, error) {
-	currUserPath := userPath + db.Divider() + id
+func (db *DB) UpdateUser(id int, email string, hashedPassword []byte, token string) (User, error) {
+	currUserPath := userPath + db.Divider() + strconv.Itoa(id)
 
 	updatedUser, err := db.ReadUserById(id)
 	if err != nil {
@@ -81,9 +81,9 @@ func (db *DB) UpdateUser(id string, email string, hashedPassword []byte, token s
 	return updatedUser, nil
 }
 
-func (db *DB) ReadUserById(id string) (User, error) {
+func (db *DB) ReadUserById(id int) (User, error) {
 	user := User{}
-	err := db.GetStruct(userPath+db.Divider()+id, &user)
+	err := db.GetStruct(userPath+db.Divider()+strconv.Itoa(id), &user)
 	if err != nil {
 		return User{}, errors.New("user with this id doesnt exist")
 	}

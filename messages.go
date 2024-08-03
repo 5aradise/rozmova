@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"sort"
+	"strconv"
 )
 
 func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
@@ -10,8 +11,14 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 
+	userId, err := cfg.getIdFromJWT(r)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "wrong jwt token")
+		return
+	}
+
 	msg := respMessage{}
-	err := decodeResp(r, &msg)
+	err = decodeResp(r, &msg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -28,13 +35,13 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := cfg.db.AddMsg(cleanMsg)
+	msgId, err := cfg.db.AddMsg(userId, cleanMsg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]any{"id": id, "body": cleanMsg})
+	respondWithJSON(w, http.StatusCreated, map[string]any{"id": msgId, "body": cleanMsg, "author_id": userId})
 }
 
 func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +57,13 @@ func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) getMessageById(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("messageId")
+	idStr := r.PathValue("messageId")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	msg, err := cfg.db.ReadMsgById(id)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
@@ -58,4 +71,38 @@ func (cfg *apiConfig) getMessageById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, msg)
+}
+
+func (cfg *apiConfig) deleteMessage(w http.ResponseWriter, r *http.Request) {
+	userId, err := cfg.getIdFromJWT(r)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "wrong jwt token")
+		return
+	}
+
+	msgId, err := strconv.Atoi(r.PathValue("messageId"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	msg, err := cfg.db.ReadMsgById(msgId)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if msg.AuthorId != userId {
+		respondWithError(w, http.StatusForbidden, "wrong jwt token")
+		return
+	}
+
+	err = cfg.db.DeleteMsg(msgId)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	w.Write(nil)
 }

@@ -37,3 +37,22 @@ func (cfg *apiConfig) getJWTtoken(r *http.Request) (*jwt.Token, error) {
 	}
 	return jwtToken, nil
 }
+
+func (cfg *apiConfig) getIdFromJWT(r *http.Request) (int, error) {
+	token, err := cfg.getJWTtoken(r)
+	if err != nil {
+		return 0, err
+	}
+
+	userIdStr, err := token.Claims.GetSubject()
+	if err != nil {
+		return 0, err
+	}
+
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return userId, nil
+}

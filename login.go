@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,7 +43,7 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.UpdateUser(strconv.Itoa(requiredUser.Id), "", nil, refreshToken)
+	_, err = cfg.db.UpdateUser(requiredUser.Id, "", nil, refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

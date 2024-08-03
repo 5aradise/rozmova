@@ -7,13 +7,14 @@ import (
 )
 
 type Message struct {
-	Id   int    `json:"id"`
-	Body string `json:"body"`
+	Id       int    `json:"id"`
+	Body     string `json:"body"`
+	AuthorId int    `json:"author_id"`
 }
 
 var msgPath = "messages"
 
-func (db *DB) AddMsg(data string) (int, error) {
+func (db *DB) AddMsg(authorId int, data string) (int, error) {
 	id, err := db.GetLen(msgPath)
 	if err != nil {
 		return 0, err
@@ -21,8 +22,9 @@ func (db *DB) AddMsg(data string) (int, error) {
 	id++
 
 	msg := Message{
-		Id:   id,
-		Body: data,
+		Id:       id,
+		Body:     data,
+		AuthorId: authorId,
 	}
 	err = db.Insert(msgPath+db.Divider()+strconv.Itoa(id), msg)
 	if err != nil {
@@ -32,9 +34,9 @@ func (db *DB) AddMsg(data string) (int, error) {
 	return id, nil
 }
 
-func (db *DB) ReadMsgById(id string) (Message, error) {
+func (db *DB) ReadMsgById(id int) (Message, error) {
 	msg := Message{}
-	err := db.GetStruct(msgPath+db.Divider()+id, &msg)
+	err := db.GetStruct(msgPath+db.Divider()+strconv.Itoa(id), &msg)
 	if err != nil {
 		return Message{}, err
 	}
@@ -58,4 +60,8 @@ func (db *DB) ReadMsgs() ([]Message, error) {
 	}
 
 	return msgs, nil
+}
+
+func (db *DB) DeleteMsg(id int) error {
+	return db.Delete(msgPath + db.Divider() + strconv.Itoa(id))
 }
