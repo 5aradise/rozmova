@@ -43,16 +43,16 @@ func (db *DB) ReadMsgById(id int) (Message, error) {
 	return msg, nil
 }
 
-func (db *DB) ReadMsgs() ([]Message, error) {
+func (db *DB) ReadMsgs() ([]*Message, error) {
 	maps, err := db.GetAllMaps(msgPath)
 	if err != nil {
 		return nil, err
 	}
 
-	msgs := make([]Message, 0, len(maps))
+	msgs := make([]*Message, 0, len(maps))
 	for _, mapInst := range maps {
-		msg := Message{}
-		err = jsondb.MapToStruct(&msg, mapInst)
+		msg := &Message{}
+		err = jsondb.MapToStruct(msg, mapInst)
 		if err != nil {
 			return nil, err
 		}

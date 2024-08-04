@@ -159,15 +159,15 @@ func (db *DB) ReadUserByToken(token string) (User, error) {
 	}
 }
 
-func (db *DB) ReadUsers() ([]User, error) {
+func (db *DB) ReadUsers() ([]*User, error) {
 	maps, err := db.GetAllMaps(userPath)
 	if err != nil {
 		return nil, err
 	}
 
-	users := make([]User, 0, len(maps))
+	users := make([]*User, 0, len(maps))
 	for _, mapInst := range maps {
-		user := User{}
+		user := &User{}
 		err = jsondb.MapToStruct(&user, mapInst)
 		if err != nil {
 			return nil, err

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/5aradise/rozmova/internal/database"
 )
 
 func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +55,25 @@ func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(msgs, func(i, j int) bool {
 		return msgs[i].Id < msgs[j].Id
 	})
+
+	authorIdStr := r.URL.Query().Get("author_id")
+	if authorIdStr != "" {
+		authorId, err := strconv.Atoi(authorIdStr)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid user id")
+			return
+		}
+
+		authorsMsgs := make([]*database.Message, 0)
+		for _, msg := range msgs {
+			if msg.AuthorId == authorId {
+				authorsMsgs = append(authorsMsgs, msg)
+			}
+		}
+		respondWithJSON(w, http.StatusOK, authorsMsgs)
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, msgs)
 }
 
