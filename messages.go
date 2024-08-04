@@ -52,9 +52,6 @@ func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	sort.Slice(msgs, func(i, j int) bool {
-		return msgs[i].Id < msgs[j].Id
-	})
 
 	authorIdStr := r.URL.Query().Get("author_id")
 	if authorIdStr != "" {
@@ -70,8 +67,14 @@ func (cfg *apiConfig) getMessages(w http.ResponseWriter, r *http.Request) {
 				authorsMsgs = append(authorsMsgs, msg)
 			}
 		}
-		respondWithJSON(w, http.StatusOK, authorsMsgs)
-		return
+		msgs = authorsMsgs
+	}
+
+	sortParam := r.URL.Query().Get("sort")
+	if sortParam != "desc" {
+		sort.Slice(msgs, func(i, j int) bool {
+			return msgs[i].Id > msgs[j].Id
+		})
 	}
 
 	respondWithJSON(w, http.StatusOK, msgs)
