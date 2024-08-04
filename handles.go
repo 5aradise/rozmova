@@ -10,6 +10,8 @@ func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	const messagesPath = "/messages"
 	const usersPath = "/users"
 
+	const webhookPath = "/webhooks"
+
 	const filepathRoot = "./public"
 
 	mux.HandleFunc("GET "+adminPathRoot+"/metrics", cfg.showMetrics)
@@ -30,6 +32,8 @@ func createHandles(mux *http.ServeMux, cfg *apiConfig) {
 	mux.HandleFunc("POST "+apiPathRoot+"/login", cfg.loginUser)
 	mux.HandleFunc("POST "+apiPathRoot+"/refresh", cfg.refreshToken)
 	mux.HandleFunc("POST "+apiPathRoot+"/revoke", cfg.revokeToken)
+
+	mux.HandleFunc("POST "+apiPathRoot+"/polka"+webhookPath, cfg.polkaWebhooks)
 
 	mux.Handle(""+appPathRoot+"/*", cfg.middlewareMetricsInc(http.StripPrefix(appPathRoot, http.FileServer(http.Dir(filepathRoot)))))
 }

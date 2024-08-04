@@ -11,13 +11,15 @@ type apiConfig struct {
 	fileserverHits int
 	db             *database.DB
 	jwtKey         []byte
+	polkaKey       string
 }
 
-func NewApiConfig(db *database.DB, jwtKey string) *apiConfig {
+func NewApiConfig(db *database.DB, jwtKey, polkaKey string) *apiConfig {
 	return &apiConfig{
 		fileserverHits: 0,
 		db:             db,
 		jwtKey:         []byte(jwtKey),
+		polkaKey:       polkaKey,
 	}
 }
 

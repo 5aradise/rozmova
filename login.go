@@ -7,25 +7,25 @@ import (
 )
 
 func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
-	type respUser struct {
+	type reqUser struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
-	resp := respUser{}
-	err := decodeResp(r, &resp)
+	req := reqUser{}
+	err := decodeReq(r, &req)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "something went wrong")
 		return
 	}
 
-	requiredUser, err := cfg.db.ReadUserByEmail(resp.Email)
+	requiredUser, err := cfg.db.ReadUserByEmail(req.Email)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "wrong password")
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword(requiredUser.HashedPassword, []byte(resp.Password))
+	err = bcrypt.CompareHashAndPassword(requiredUser.HashedPassword, []byte(req.Password))
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "wrong password")
 		return
@@ -43,7 +43,7 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.UpdateUser(requiredUser.Id, "", nil, refreshToken)
+	_, err = cfg.db.UpdateUserToken(requiredUser.Id, refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -54,5 +54,6 @@ func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
 		"email":         requiredUser.Email,
 		"token":         accessToken,
 		"refresh_token": refreshToken,
+		"is_chirpy_red": requiredUser.IsSub,
 	})
 }

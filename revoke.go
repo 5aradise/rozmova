@@ -25,7 +25,7 @@ func (cfg *apiConfig) revokeToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.UpdateUser(user.Id, "", nil, randToken)
+	_, err = cfg.db.UpdateUserToken(user.Id, randToken)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

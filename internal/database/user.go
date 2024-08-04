@@ -9,26 +9,29 @@ import (
 )
 
 type User struct {
-	Id             int    `json:"id"`
-	Email          string `json:"email"`
-	HashedPassword []byte `json:"hashedPassword"`
-	RefreshToken   struct {
-		Token     string    `json:"token"`
-		ExpiresAt time.Time `json:"expAt"`
-	} `json:"refreshToken"`
+	Id             int          `json:"id"`
+	Email          string       `json:"email"`
+	HashedPassword []byte       `json:"hashedPassword"`
+	IsSub          bool         `json:"isSub"`
+	RefreshToken   RefreshToken `json:"refreshToken"`
+}
+
+type RefreshToken struct {
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expAt"`
 }
 
 var userPath = "users"
 
-func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
+func (db *DB) AddUser(email string, hashedPassword []byte) (User, error) {
 	_, err := db.ReadUserByEmail(email)
 	if err == nil {
-		return 0, errors.New("user with this email already registered")
+		return User{}, errors.New("user with this email already registered")
 	}
 
 	id, err := db.GetLen(userPath)
 	if err != nil {
-		return 0, err
+		return User{}, err
 	}
 	id++
 
@@ -39,13 +42,13 @@ func (db *DB) AddUser(email string, hashedPassword []byte) (int, error) {
 	}
 	err = db.Insert(userPath+db.Divider()+strconv.Itoa(id), user)
 	if err != nil {
-		return 0, err
+		return User{}, err
 	}
 
-	return id, nil
+	return user, nil
 }
 
-func (db *DB) UpdateUser(id int, email string, hashedPassword []byte, token string) (User, error) {
+func (db *DB) UpdateUserEmail(id int, email string) (User, error) {
 	currUserPath := userPath + db.Divider() + strconv.Itoa(id)
 
 	updatedUser, err := db.ReadUserById(id)
@@ -53,29 +56,63 @@ func (db *DB) UpdateUser(id int, email string, hashedPassword []byte, token stri
 		return User{}, errors.New("user with this id doesnt exist")
 	}
 
-	if email != "" {
-		err = db.Insert(currUserPath+db.Divider()+"email", email)
-		if err != nil {
-			return User{}, err
-		}
-		updatedUser.Email = email
+	err = db.Insert(currUserPath+db.Divider()+"email", email)
+	if err != nil {
+		return User{}, err
 	}
-	if len(hashedPassword) != 0 {
-		err = db.Insert(currUserPath+db.Divider()+"hashedPassword", hashedPassword)
-		if err != nil {
-			return User{}, err
-		}
-		updatedUser.HashedPassword = hashedPassword
+	updatedUser.Email = email
+
+	return updatedUser, nil
+}
+
+func (db *DB) UpdateUserPassword(id int, hashedPassword []byte) (User, error) {
+	currUserPath := userPath + db.Divider() + strconv.Itoa(id)
+
+	updatedUser, err := db.ReadUserById(id)
+	if err != nil {
+		return User{}, errors.New("user with this id doesnt exist")
 	}
-	if token != "" {
-		const expTime = time.Hour * 24 * 60
-		err = db.Insert(currUserPath+db.Divider()+"refreshToken", map[string]any{
-			"token": token,
-			"expAt": time.Now().Add(expTime),
-		})
-		if err != nil {
-			return User{}, err
-		}
+
+	err = db.Insert(currUserPath+db.Divider()+"hashedPassword", hashedPassword)
+	if err != nil {
+		return User{}, err
+	}
+	updatedUser.HashedPassword = hashedPassword
+
+	return updatedUser, nil
+}
+
+func (db *DB) UpdateUserToken(id int, token string) (User, error) {
+	currUserPath := userPath + db.Divider() + strconv.Itoa(id)
+
+	updatedUser, err := db.ReadUserById(id)
+	if err != nil {
+		return User{}, errors.New("user with this id doesnt exist")
+	}
+
+	const expTime = time.Hour * 24 * 60
+	err = db.Insert(currUserPath+db.Divider()+"refreshToken", RefreshToken{
+		Token:     token,
+		ExpiresAt: time.Now().Add(expTime),
+	})
+	if err != nil {
+		return User{}, err
+	}
+
+	return updatedUser, nil
+}
+
+func (db *DB) UpdateUserSubscription(id int, isSub bool) (User, error) {
+	currUserPath := userPath + db.Divider() + strconv.Itoa(id)
+
+	updatedUser, err := db.ReadUserById(id)
+	if err != nil {
+		return User{}, errors.New("user with this id doesnt exist")
+	}
+
+	err = db.Insert(currUserPath+db.Divider()+"isSub", isSub)
+	if err != nil {
+		return User{}, err
 	}
 
 	return updatedUser, nil

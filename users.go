@@ -9,36 +9,36 @@ import (
 )
 
 func (cfg *apiConfig) registerUser(w http.ResponseWriter, r *http.Request) {
-	type respUser struct {
+	type reqUser struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
-	resp := respUser{}
-	err := decodeResp(r, &resp)
+	req := reqUser{}
+	err := decodeReq(r, &req)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "something went wrong")
 		return
 	}
 
-	if len(resp.Email) == 0 {
+	if len(req.Email) == 0 {
 		respondWithError(w, http.StatusBadRequest, "empty email")
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	id, err := cfg.db.AddUser(resp.Email, hashedPassword)
+	user, err := cfg.db.AddUser(req.Email, hashedPassword)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, map[string]any{"email": resp.Email, "id": id})
+	respondWithJSON(w, http.StatusCreated, user)
 }
 
 func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
@@ -48,35 +48,43 @@ func (cfg *apiConfig) changeUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type respUser struct {
+	type reqUser struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	resp := respUser{}
-	err = decodeResp(r, &resp)
+	req := reqUser{}
+	err = decodeReq(r, &req)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if resp.Password == "" {
+	if req.Password == "" {
 		respondWithError(w, http.StatusBadRequest, "empty password")
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(resp.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	user, err := cfg.db.UpdateUser(userId, resp.Email, hashedPassword, "")
+	if req.Email != "" {
+		_, err = cfg.db.UpdateUserEmail(userId, req.Email)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	user, err := cfg.db.UpdateUserPassword(userId, hashedPassword)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]any{"email": user.Email, "id": user.Id})
+	respondWithJSON(w, http.StatusOK, user)
 }
 
 func (cfg *apiConfig) getUsers(w http.ResponseWriter, r *http.Request) {

@@ -7,7 +7,7 @@ import (
 )
 
 func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
-	type respMessage struct {
+	type reqMessage struct {
 		Body string `json:"body"`
 	}
 
@@ -17,8 +17,8 @@ func (cfg *apiConfig) postMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := respMessage{}
-	err = decodeResp(r, &msg)
+	msg := reqMessage{}
+	err = decodeReq(r, &msg)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return

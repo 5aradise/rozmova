@@ -15,6 +15,7 @@ func main() {
 	port := os.Getenv("PORT")
 	databasePath := os.Getenv("DATABSE_PATH")
 	jwtSecret := os.Getenv("JWT_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 
 	if port == "" {
 		port = "8080"
@@ -33,7 +34,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg := NewApiConfig(db, jwtSecret)
+	cfg := NewApiConfig(db, jwtSecret, polkaKey)
 
 	createHandles(mux, cfg)
 
